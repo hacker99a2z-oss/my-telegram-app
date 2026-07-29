@@ -162,45 +162,44 @@
     let weeklyCoins = 0;
     let rankBonus = 0.00;
 
-    // Initialize AdsController Global Variable
+    // Global AdController Variable
     let AdController = null;
+    const ADSGRAM_BLOCK_ID = "40294";
 
-    // Pre-load Adsgram when page loads
-    window.addEventListener('DOMContentLoaded', () => {
-      initAdsgram();
-    });
-
-    function initAdsgram() {
-      if (window.Adsgram) {
+    // Safe Init for Adsgram
+    function getAdController() {
+      if (!AdController && window.Adsgram) {
         try {
-          AdController = window.Adsgram.init({ blockId: "40294" });
-        } catch (e) {
-          console.error("Adsgram init error:", e);
+          AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+        } catch (err) {
+          console.error("Adsgram init error:", err);
         }
-      } else {
-        // If script is not loaded yet, retry after 1 second
-        setTimeout(initAdsgram, 1000);
       }
+      return AdController;
     }
 
+    // Pre-load on startup
+    window.addEventListener('DOMContentLoaded', () => {
+      getAdController();
+    });
+
     function watchAd() {
-      if (!AdController) {
-        if (window.Adsgram) {
-          AdController = window.Adsgram.init({ blockId: "40294" });
-        } else {
-          alert("Ad controller is loading or blocked by AdBlocker. Please wait 3 seconds and click again!");
-          return;
-        }
+      const controller = getAdController();
+
+      if (!controller) {
+        alert("Ad network is currently loading or blocked by an AdBlocker. Please check your browser settings or try again in 5 seconds!");
+        return;
       }
 
-      AdController.show().then((result) => {
+      controller.show().then((result) => {
         // Success reward
         mainCoins += 100;
         weeklyCoins += 100;
         updateUI();
         startTimer(30);
-      }).catch((result) => {
-        alert("Ad was not completed or closed early.");
+      }).catch((error) => {
+        console.log("Ad Error / Closed:", error);
+        alert("Ad was not completed or no ads were available.");
       });
     }
 
