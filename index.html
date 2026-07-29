@@ -200,6 +200,7 @@
       }).catch((error) => {
         console.log("Ad Error / Closed:", error);
         alert("Ad was not completed or no ads were available.");
+        startTimer(5);
       });
     }
 
