@@ -120,7 +120,7 @@
       <select id="network">
         <option value="TON-USDT">TON - USDT</option>
       </select>
-      
+
       <label style="margin-top:12px; display:block; font-size:13px; color:#ccc;">Withdraw Amount ($)</label>
       <input type="number" id="withdraw-amount" placeholder="e.g. 0.10, 0.50, 1.00" step="0.1" oninput="calculateCoinsCost()">
       <small id="coin-cost-text" style="color:#0088cc; margin-top:6px; display:block; font-weight:bold;"></small>
@@ -162,31 +162,46 @@
     let weeklyCoins = 0;
     let rankBonus = 0.00;
 
-    // Fixed Safe Adsgram Function
+    // Initialize AdsController Global Variable
+    let AdController = null;
+
+    // Pre-load Adsgram when page loads
+    window.addEventListener('DOMContentLoaded', () => {
+      initAdsgram();
+    });
+
+    function initAdsgram() {
+      if (window.Adsgram) {
+        try {
+          AdController = window.Adsgram.init({ blockId: "40294" });
+        } catch (e) {
+          console.error("Adsgram init error:", e);
+        }
+      } else {
+        // If script is not loaded yet, retry after 1 second
+        setTimeout(initAdsgram, 1000);
+      }
+    }
+
     function watchAd() {
-      // Check if Adsgram SDK is available
-      if (typeof window.Adsgram === 'undefined') {
-        alert("Adsgram SDK is still loading or blocked by AdBlocker. Please wait a few seconds and try again!");
-        return;
+      if (!AdController) {
+        if (window.Adsgram) {
+          AdController = window.Adsgram.init({ blockId: "40294" });
+        } else {
+          alert("Ad controller is loading or blocked by AdBlocker. Please wait 3 seconds and click again!");
+          return;
+        }
       }
 
-      try {
-        // Initialize AdController dynamically on click
-        const AdController = window.Adsgram.init({ blockId: "40294" });
-
-        AdController.show().then((result) => {
-          // Success: Reward user
-          mainCoins += 100;
-          weeklyCoins += 100;
-          updateUI();
-          startTimer(30);
-        }).catch((result) => {
-          // Ad was closed early or failed to show
-          alert("Ad was closed before completion or no ads available.");
-        });
-      } catch (e) {
-        alert("Error initializing ad: " + e.message);
-      }
+      AdController.show().then((result) => {
+        // Success reward
+        mainCoins += 100;
+        weeklyCoins += 100;
+        updateUI();
+        startTimer(30);
+      }).catch((result) => {
+        alert("Ad was not completed or closed early.");
+      });
     }
 
     function startTimer(seconds) {
