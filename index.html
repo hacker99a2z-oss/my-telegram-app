@@ -87,7 +87,7 @@
       border-radius: 20px; 
       font-weight: 700; 
       color: #ffb800; 
-      border: 1px solid rgba(ffb800, 0.3);
+      border: 1px solid rgba(255, 184, 0, 0.3);
       display: flex;
       align-items: center;
       gap: 6px;
@@ -463,27 +463,15 @@
       <div>
         <div style="font-size: 11px; color: #8fa0b5;">TIME LEFT</div>
         <div id="contest-timer" style="font-weight: bold; color: #00aaff; font-size: 16px; margin-top: 2px;">
-          06 Days: 18 Hours
+          Calculated...
         </div>
       </div>
       <div style="font-size: 28px;">🏆</div>
     </div>
 
     <h4 style="margin-bottom: 12px; color: #e0e6ed; font-size: 14px;">Weekly Leaderboard</h4>
-    <div class="rank-row">
-      <span>#1 User_Alpha</span>
-      <span>18,500 Coins</span>
-      <span style="color:#00c853; font-weight:bold;">$0.50</span>
-    </div>
-    <div class="rank-row">
-      <span>#2 Crypt0_King</span>
-      <span>14,200 Coins</span>
-      <span style="color:#00c853; font-weight:bold;">$0.30</span>
-    </div>
-    <div class="rank-row">
-      <span>#3 TG_Pro_User</span>
-      <span>11,800 Coins</span>
-      <span style="color:#00c853; font-weight:bold;">$0.20</span>
+    <div id="leaderboard-list">
+      <!-- Leaderboard dynamically loaded via JS -->
     </div>
   </div>
 
@@ -550,11 +538,16 @@
   <script>
     // Telegram WebApp Initialization
     const tg = window.Telegram ? window.Telegram.WebApp : null;
+    let currentUser = { id: 999, name: "You" };
+
     if (tg) {
       tg.expand();
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const user = tg.initDataUnsafe.user;
-        document.getElementById('user-name').innerText = user.first_name + (user.last_name ? " " + user.last_name : "");
+        currentUser.id = user.id;
+        currentUser.name = user.first_name + (user.last_name ? " " + user.last_name : "");
+        
+        document.getElementById('user-name').innerText = currentUser.name;
         
         if (user.photo_url) {
           document.getElementById('avatar-container').innerHTML = `<img src="${user.photo_url}" alt="Profile">`;
@@ -588,6 +581,8 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       getAdController();
+      startWeeklyContestTimer();
+      renderLeaderboard();
     });
 
     function watchAd() {
@@ -602,6 +597,7 @@
         mainCoins += 100;
         weeklyCoins += 100;
         updateUI();
+        renderLeaderboard();
         startTimer(30);
       }).catch((error) => {
         console.log("Ad Error / Closed:", error);
@@ -624,6 +620,81 @@
           btn.innerHTML = `<span>🎬 PLAY ADS</span><span class="sub-reward">Earn +100 Coins</span>`;
         }
       }, 1000);
+    }
+
+    /* Dynamic Leaderboard & Auto Prize Distribution Logic */
+    let sampleLeaderboard = [
+      { name: "User_Alpha", coins: 18500 },
+      { name: "Crypt0_King", coins: 14200 },
+      { name: "TG_Pro_User", coins: 11800 }
+    ];
+
+    function renderLeaderboard() {
+      // Add current user dynamically to leaderboard evaluation
+      let board = [...sampleLeaderboard, { name: currentUser.name + " (You)", coins: weeklyCoins }];
+      board.sort((a, b) => b.coins - a.coins);
+
+      let html = '';
+      const prizes = ["$0.50", "$0.30", "$0.20"];
+
+      board.slice(0, 10).forEach((item, index) => {
+        const prizeText = index < 3 ? `<span style="color:#00c853; font-weight:bold;">${prizes[index]}</span>` : `<span style="color:#8fa0b5;">-</span>`;
+        html += `
+          <div class="rank-row">
+            <span>#${index + 1} ${item.name}</span>
+            <span>${item.coins.toLocaleString()} Coins</span>
+            ${prizeText}
+          </div>
+        `;
+      });
+
+      document.getElementById('leaderboard-list').innerHTML = html;
+    }
+
+    /* 7-Day Reset Timer Logic */
+    let contestTargetTime = localStorage.getItem('contest_target') || (Date.now() + 7 * 24 * 60 * 60 * 1000);
+    localStorage.setItem('contest_target', contestTargetTime);
+
+    function startWeeklyContestTimer() {
+      setInterval(() => {
+        let now = Date.now();
+        let distance = contestTargetTime - now;
+
+        if (distance <= 0) {
+          // Timer Expired: Allocate Rank Bonuses & Reset Weekly Coins
+          awardContestPrizes();
+          contestTargetTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
+          localStorage.setItem('contest_target', contestTargetTime);
+        }
+
+        let days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        let hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        let minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        document.getElementById('contest-timer').innerText = 
+          `${days}d ${hours}h ${minutes}m ${seconds}s`;
+      }, 1000);
+    }
+
+    function awardContestPrizes() {
+      let board = [...sampleLeaderboard, { name: currentUser.name, coins: weeklyCoins }];
+      board.sort((a, b) => b.coins - a.coins);
+
+      let myRank = board.findIndex(u => u.name.includes(currentUser.name)) + 1;
+
+      if (myRank === 1) rankBonus += 0.50;
+      else if (myRank === 2) rankBonus += 0.30;
+      else if (myRank === 3) rankBonus += 0.20;
+
+      if (myRank >= 1 && myRank <= 3) {
+        alert(`🎉 Congratulations! You ended Weekly Contest at Rank #${myRank} and won Rank Bonus! Check Withdraw page.`);
+      }
+
+      // Reset Weekly Coins, Main Coins Safe
+      weeklyCoins = 0;
+      updateUI();
+      renderLeaderboard();
     }
 
     function updateUI() {
