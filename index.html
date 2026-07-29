@@ -2,163 +2,567 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Real Earners</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Real Earners - Telegram Mini App</title>
+  
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Adsgram SDK -->
   <script src="https://sad.adsgram.ai/js/sad-index.js"></script>
+
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; justify-content: space-between; user-select: none; }
-    
-    /* Header */
-    .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1e1e1e; border-bottom: 1px solid #333; }
-    .user-info { display: flex; align-items: center; gap: 10px; }
-    .user-info img { width: 38px; height: 38px; border-radius: 50%; background: #333; object-fit: cover; }
-    .coins-box { background: #2a2a2a; padding: 6px 14px; border-radius: 20px; font-weight: bold; color: #ffd700; border: 1px solid #ffd700; }
+    /* Global Reset & PDF Dark Theme Setup */
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-    /* Page Content */
-    .page { display: none; padding: 20px; flex-grow: 1; overflow-y: auto; }
-    .active-page { display: block; }
+    body { 
+      background: radial-gradient(circle at top, #1a233a 0%, #0d121d 100%);
+      color: #ffffff; 
+      display: flex; 
+      flex-direction: column; 
+      height: 100vh; 
+      justify-content: space-between; 
+      user-select: none;
+      overflow: hidden;
+    }
 
-    /* Home Page */
-    .weekly-box { background: #1e1e1e; padding: 12px; border-radius: 10px; text-align: right; margin-bottom: 25px; border-right: 4px solid #0088cc; }
-    .play-ads-container { display: flex; justify-content: center; align-items: center; height: 250px; flex-direction: column; }
-    .btn-ads { background: linear-gradient(135deg, #0088cc, #005588); color: white; border: none; padding: 18px 45px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); transition: transform 0.1s; }
-    .btn-ads:active { transform: scale(0.96); }
-    .btn-ads:disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
-
-    /* Refer Page */
-    .ref-card { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
-    .ref-link-box { display: flex; gap: 10px; margin-top: 10px; }
-    .ref-link-box input { flex-grow: 1; padding: 10px; background: #121212; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 13px; }
-    .ref-link-box button { padding: 10px 18px; background: #0088cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    .ref-item { display: flex; justify-content: space-between; background: #1e1e1e; padding: 12px; border-radius: 6px; margin-top: 8px; font-size: 14px; }
-
-    /* Contest Page */
-    .contest-header { display: flex; justify-content: space-between; align-items: center; background: #1e1e1e; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; }
-    .rank-row { display: flex; justify-content: space-between; background: #1e1e1e; padding: 12px; border-radius: 6px; margin-bottom: 6px; align-items: center; font-size: 14px; }
-
-    /* Withdraw Page */
-    .withdraw-stats { display: flex; justify-content: space-between; margin-bottom: 20px; background: #1e1e1e; padding: 15px; border-radius: 10px; }
-    .withdraw-box { background: #1e1e1e; padding: 15px; border-radius: 10px; }
-    .withdraw-box select, .withdraw-box input { width: 100%; padding: 12px; margin-top: 8px; background: #121212; border: 1px solid #444; color: white; border-radius: 6px; font-size: 14px; }
-    .btn-withdraw { width: 100%; margin-top: 15px; padding: 14px; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
-    .support-link { text-align: center; margin-top: 25px; }
-    .support-link a { color: #0088cc; text-decoration: none; font-size: 14px; font-weight: bold; }
-
-    /* Bottom Navigation */
-    .navbar { display: flex; justify-content: space-around; background: #1e1e1e; padding: 12px 0; border-top: 1px solid #333; }
-    .nav-btn { background: none; border: none; color: #888; font-size: 14px; font-weight: bold; cursor: pointer; width: 25%; text-align: center; }
-    .nav-btn.active { color: #0088cc; }
-
+    /* Form Fields Selection Fix */
     input, select, textarea {
       user-select: text !important;
       -webkit-user-select: text !important;
+    }
+
+    /* Top Header Bar */
+    .header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 16px 20px; 
+      background: rgba(18, 26, 43, 0.8); 
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05); 
+    }
+
+    .user-info { 
+      display: flex; 
+      align-items: center; 
+      gap: 12px; 
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #0088cc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: white;
+      font-size: 16px;
+      overflow: hidden;
+      border: 2px solid #23314d;
+    }
+
+    .user-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 15px;
+      color: #e0e6ed;
+    }
+
+    .coins-box { 
+      background: rgba(255, 184, 0, 0.1); 
+      padding: 8px 16px; 
+      border-radius: 20px; 
+      font-weight: 700; 
+      color: #ffb800; 
+      border: 1px solid rgba(ffb800, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+    }
+
+    /* Main Page Content Wrapper */
+    .page { 
+      display: none; 
+      padding: 20px; 
+      flex-grow: 1; 
+      overflow-y: auto; 
+    }
+
+    .active-page { 
+      display: flex; 
+      flex-direction: column;
+    }
+
+    /* Home Page Layout */
+    #home-page {
+      justify-content: space-between;
+      align-items: center;
+      text-align: center;
+    }
+
+    .weekly-tracker-container {
+      width: 100%;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .weekly-box { 
+      background: rgba(0, 136, 204, 0.08); 
+      padding: 10px 16px; 
+      border-radius: 12px; 
+      text-align: right; 
+      border: 1px dashed #0088cc;
+      max-width: 180px;
+    }
+
+    .weekly-label {
+      font-size: 11px;
+      color: #8fa0b5;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .weekly-amount {
+      font-weight: 700;
+      font-size: 16px;
+      color: #00aaff;
+      margin-top: 2px;
+    }
+
+    .ad-play-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin: auto 0;
+    }
+
+    .play-icon-circle {
+      width: 70px;
+      height: 70px;
+      background: #0088cc;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 30px rgba(0, 136, 204, 0.5);
+    }
+
+    .play-icon-circle svg {
+      width: 32px;
+      height: 32px;
+      fill: white;
+      margin-left: 4px;
+    }
+
+    .ad-subtitle {
+      color: #8fa0b5;
+      font-size: 15px;
+    }
+
+    .btn-play-ads { 
+      width: 100%;
+      background: linear-gradient(135deg, #0088cc 0%, #005588 100%); 
+      color: white; 
+      border: none; 
+      padding: 18px; 
+      font-size: 18px; 
+      font-weight: 700; 
+      border-radius: 16px; 
+      cursor: pointer; 
+      box-shadow: 0 8px 25px rgba(0, 136, 204, 0.3); 
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .btn-play-ads span.sub-reward {
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    .btn-play-ads:active { 
+      transform: scale(0.98); 
+    }
+
+    .btn-play-ads:disabled { 
+      background: #1f2a3e; 
+      color: #52637a; 
+      cursor: not-allowed; 
+      box-shadow: none; 
+    }
+
+    /* Cards & Form Components */
+    .card {
+      background: rgba(22, 31, 49, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    /* Refer Page */
+    .ref-link-box { 
+      display: flex; 
+      gap: 10px; 
+      margin-top: 12px; 
+    }
+
+    .ref-link-box input { 
+      flex-grow: 1; 
+      padding: 12px; 
+      background: #0d121d; 
+      border: 1px solid #23314d; 
+      color: #fff; 
+      border-radius: 10px; 
+      font-size: 13px; 
+      outline: none;
+    }
+
+    .ref-link-box button { 
+      padding: 12px 20px; 
+      background: #0088cc; 
+      color: white; 
+      border: none; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      font-weight: 600; 
+    }
+
+    .ref-item { 
+      display: flex; 
+      justify-content: space-between; 
+      background: #121a2b; 
+      padding: 14px; 
+      border-radius: 10px; 
+      margin-top: 8px; 
+      font-size: 14px; 
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+
+    /* Contest Page */
+    .contest-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      background: #121a2b; 
+      padding: 16px; 
+      border-radius: 12px; 
+      margin-bottom: 20px; 
+      border: 1px solid #0088cc;
+    }
+
+    .rank-row { 
+      display: flex; 
+      justify-content: space-between; 
+      background: #121a2b; 
+      padding: 14px; 
+      border-radius: 10px; 
+      margin-bottom: 8px; 
+      align-items: center; 
+      font-size: 14px; 
+    }
+
+    /* Withdraw Page */
+    .withdraw-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: #121a2b;
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stat-title {
+      font-size: 11px;
+      color: #8fa0b5;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: #8fa0b5;
+      margin-bottom: 6px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 14px;
+      background: #0d121d;
+      border: 1px solid #23314d;
+      color: white;
+      border-radius: 10px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .btn-withdraw { 
+      width: 100%; 
+      margin-top: 10px; 
+      padding: 16px; 
+      background: #00c853; 
+      color: white; 
+      border: none; 
+      border-radius: 12px; 
+      font-weight: 700; 
+      font-size: 16px; 
+      cursor: pointer; 
+      box-shadow: 0 6px 20px rgba(0, 200, 83, 0.3);
+    }
+
+    .support-btn { 
+      text-align: center; 
+      margin-top: 20px; 
+    }
+
+    .support-btn a { 
+      color: #00aaff; 
+      text-decoration: none; 
+      font-size: 13px; 
+      font-weight: 600; 
+    }
+
+    /* Fixed Bottom Navigation Bar */
+    .navbar { 
+      display: flex; 
+      justify-content: space-around; 
+      background: rgba(18, 26, 43, 0.95); 
+      backdrop-filter: blur(15px);
+      padding: 10px 0 14px 0; 
+      border-top: 1px solid rgba(255, 255, 255, 0.05); 
+    }
+
+    .nav-btn { 
+      background: none; 
+      border: none; 
+      color: #52637a; 
+      font-size: 11px; 
+      font-weight: 600; 
+      cursor: pointer; 
+      width: 25%; 
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .nav-btn svg {
+      width: 22px;
+      height: 22px;
+      fill: #52637a;
+    }
+
+    .nav-btn.active { 
+      color: #0088cc; 
+    }
+
+    .nav-btn.active svg { 
+      fill: #0088cc; 
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Header -->
+  <!-- Top Header Bar -->
   <div class="header">
     <div class="user-info">
-      <img id="user-pic" src="https://ui-avatars.com/api/?name=User&size=38" alt="Profile">
-      <span id="user-name">User</span>
+      <div class="user-avatar" id="avatar-container">TG</div>
+      <span class="user-name" id="user-name">Alex Telegram</span>
     </div>
-    <div class="coins-box">🪙 <span id="main-coins">0</span></div>
+    <div class="coins-box">
+      🪙 <span id="main-coins">0</span>
+    </div>
   </div>
 
-  <!-- Page 1: Home -->
+  <!-- Page 1: Home Page -->
   <div id="home-page" class="page active-page">
-    <div class="weekly-box">
-      <small style="color: #aaa;">Weekly Earned</small>
-      <div style="font-weight: bold; font-size: 18px; color: #0088cc;"><span id="weekly-coins">0</span> Coins</div>
+    <div class="weekly-tracker-container">
+      <div class="weekly-box">
+        <div class="weekly-label">Weekly Earned</div>
+        <div class="weekly-amount"><span id="weekly-coins">0</span> Coins</div>
+      </div>
     </div>
-    <div class="play-ads-container">
-      <button id="ad-btn" class="btn-ads" onclick="watchAd()">▶ Play Ads</button>
-      <small id="timer-text" style="margin-top: 12px; color: #aaa;"></small>
+
+    <div class="ad-play-center">
+      <div class="play-icon-circle">
+        <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+      </div>
+      <div class="ad-subtitle">Watch Ads & Earn Coins</div>
     </div>
+
+    <button id="ad-btn" class="btn-play-ads" onclick="watchAd()">
+      <span>🎬 PLAY ADS</span>
+      <span class="sub-reward">Earn +100 Coins</span>
+    </button>
   </div>
 
-  <!-- Page 2: Refer -->
+  <!-- Page 2: Refer Page -->
   <div id="refer-page" class="page">
-    <div class="ref-card">
-      <h3>Your Referral Link</h3>
+    <div class="card">
+      <h3 style="font-size: 16px;">Referral System Mechanics</h3>
       <div class="ref-link-box">
-        <input type="text" id="ref-url" readonly value="Loading...">
+        <input type="text" id="ref-url" readonly value="Loading link...">
         <button onclick="copyRefLink()">Copy</button>
       </div>
-      <small style="color:#aaa; display:block; margin-top:10px;">Get 500 bonus coins when your friend watches 20 ads!</small>
+      <p style="color:#8fa0b5; font-size: 12px; margin-top: 10px;">
+        Get 500 bonus coins when your friend completes 20 ads!
+      </p>
     </div>
-    <h4 style="margin-top:20px; color:#ddd;">My Referrals</h4>
+
+    <h4 style="margin: 10px 0; color: #e0e6ed; font-size: 14px;">My Referrals</h4>
     <div id="referral-list">
-      <div class="ref-item"><span>Demo User</span><span style="color:#0088cc;">0/20</span></div>
+      <div class="ref-item">
+        <span>Rahim_TG</span>
+        <span style="color:#0088cc; font-weight: bold;">14/20 Ads</span>
+      </div>
+      <div class="ref-item">
+        <span>Karim_Dev</span>
+        <span style="color:#00c853; font-weight: bold;">20/20 (Done +500)</span>
+      </div>
     </div>
   </div>
 
-  <!-- Page 3: Contest -->
+  <!-- Page 3: Contest Page -->
   <div id="contest-page" class="page">
     <div class="contest-header">
       <div>
-        <small style="color:#aaa;">Time Left</small>
-        <div id="contest-timer" style="font-weight:bold; color:#0088cc; font-size:16px;">6d 23h 59m</div>
+        <div style="font-size: 11px; color: #8fa0b5;">TIME LEFT</div>
+        <div id="contest-timer" style="font-weight: bold; color: #00aaff; font-size: 16px; margin-top: 2px;">
+          06 Days: 18 Hours
+        </div>
       </div>
-      <div style="font-size: 26px;">🏆</div>
+      <div style="font-size: 28px;">🏆</div>
     </div>
-    <h4 style="margin-bottom:10px; color:#ddd;">Weekly Leaderboard</h4>
-    <div class="rank-row"><span>#1 User_One</span><span>15,000 Coins</span><span style="color:#28a745; font-weight:bold;">$0.50</span></div>
-    <div class="rank-row"><span>#2 User_Two</span><span>12,000 Coins</span><span style="color:#28a745; font-weight:bold;">$0.30</span></div>
-    <div class="rank-row"><span>#3 User_Three</span><span>10,000 Coins</span><span style="color:#28a745; font-weight:bold;">$0.20</span></div>
-    <div class="rank-row"><span>#4 User_Four</span><span>8,000 Coins</span><span style="color:#aaa;">-</span></div>
+
+    <h4 style="margin-bottom: 12px; color: #e0e6ed; font-size: 14px;">Weekly Leaderboard</h4>
+    <div class="rank-row">
+      <span>#1 User_Alpha</span>
+      <span>18,500 Coins</span>
+      <span style="color:#00c853; font-weight:bold;">$0.50</span>
+    </div>
+    <div class="rank-row">
+      <span>#2 Crypt0_King</span>
+      <span>14,200 Coins</span>
+      <span style="color:#00c853; font-weight:bold;">$0.30</span>
+    </div>
+    <div class="rank-row">
+      <span>#3 TG_Pro_User</span>
+      <span>11,800 Coins</span>
+      <span style="color:#00c853; font-weight:bold;">$0.20</span>
+    </div>
   </div>
 
-  <!-- Page 4: Withdraw -->
+  <!-- Page 4: Withdraw Page -->
   <div id="withdraw-page" class="page">
-    <div class="withdraw-stats">
-      <div><small style="color:#aaa;">Rank Bonus</small><h3 style="color:#28a745;">$<span id="rank-bonus">0.00</span></h3></div>
-      <div><small style="color:#aaa;">Main Balance</small><h3>🪙 <span id="withdraw-main-coins">0</span></h3></div>
+    <div class="withdraw-grid">
+      <div class="stat-card">
+        <div class="stat-title">Rank Bonus</div>
+        <div class="stat-value" style="color: #00c853;">$<span id="rank-bonus">0.00</span> USD</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-title">Main Coins</div>
+        <div class="stat-value" style="color: #ffb800;"><span id="withdraw-main-coins">0</span></div>
+      </div>
     </div>
-    <div class="withdraw-box">
-      <label style="font-size:13px; color:#ccc;">Network</label>
-      <select id="network">
-        <option value="TON-USDT">TON - USDT</option>
-      </select>
 
-      <label style="margin-top:12px; display:block; font-size:13px; color:#ccc;">Withdraw Amount ($)</label>
-      <input type="number" id="withdraw-amount" placeholder="e.g. 0.10, 0.50, 1.00" step="0.1" oninput="calculateCoinsCost()">
-      <small id="coin-cost-text" style="color:#0088cc; margin-top:6px; display:block; font-weight:bold;"></small>
+    <div class="card">
+      <div class="form-group">
+        <label>Withdrawal Network</label>
+        <select id="network" class="form-control">
+          <option value="TON-USDT">💎 TON - USDT</option>
+        </select>
+      </div>
 
-      <label style="margin-top:12px; display:block; font-size:13px; color:#ccc;">Wallet Address</label>
-      <input type="text" id="wallet-address" placeholder="Enter TON/USDT Address">
+      <div class="form-group">
+        <label>Withdraw Amount ($)</label>
+        <input type="number" id="withdraw-amount" class="form-control" placeholder="0.50 $" step="0.1" oninput="calculateCoinsCost()">
+        <span id="coin-cost-text" style="color:#00aaff; font-size: 11px; margin-top: 6px; display: block; font-weight: 600;"></span>
+      </div>
 
-      <button class="btn-withdraw" onclick="processWithdraw()">Withdraw</button>
+      <div class="form-group">
+        <label>Wallet Address</label>
+        <input type="text" id="wallet-address" class="form-control" placeholder="Enter TON/USDT Address">
+      </div>
+
+      <button class="btn-withdraw" onclick="processWithdraw()">CONFIRM WITHDRAWAL</button>
     </div>
-    <div class="support-link">
-      <a href="https://t.me/your_admin_username" target="_blank">💬 Contact Support</a>
+
+    <div class="support-btn">
+      <a href="https://t.me/your_admin_username" target="_blank">💬 Contact App Owner Support</a>
     </div>
   </div>
 
-  <!-- Bottom Navigation -->
+  <!-- Fixed Bottom Navigation Bar -->
   <div class="navbar">
-    <button class="nav-btn" onclick="showPage('refer-page', this)">Refer</button>
-    <button class="nav-btn active" onclick="showPage('home-page', this)">Home</button>
-    <button class="nav-btn" onclick="showPage('contest-page', this)">Contest</button>
-    <button class="nav-btn" onclick="showPage('withdraw-page', this)">Withdraw</button>
+    <button class="nav-btn" onclick="showPage('refer-page', this)">
+      <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+      Refer
+    </button>
+    <button class="nav-btn active" onclick="showPage('home-page', this)">
+      <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+      Home
+    </button>
+    <button class="nav-btn" onclick="showPage('contest-page', this)">
+      <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2z"/></svg>
+      Contest
+    </button>
+    <button class="nav-btn" onclick="showPage('withdraw-page', this)">
+      <svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+      Withdraw
+    </button>
   </div>
 
   <script>
-    // Initialize Telegram WebApp
+    // Telegram WebApp Initialization
     const tg = window.Telegram ? window.Telegram.WebApp : null;
     if (tg) {
       tg.expand();
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name || "User";
-        if (tg.initDataUnsafe.user.photo_url) {
-          document.getElementById('user-pic').src = tg.initDataUnsafe.user.photo_url;
+        const user = tg.initDataUnsafe.user;
+        document.getElementById('user-name').innerText = user.first_name + (user.last_name ? " " + user.last_name : "");
+        
+        if (user.photo_url) {
+          document.getElementById('avatar-container').innerHTML = `<img src="${user.photo_url}" alt="Profile">`;
+        } else {
+          document.getElementById('avatar-container').innerText = user.first_name.charAt(0).toUpperCase();
         }
-        document.getElementById('ref-url').value = `https://t.me/real_earners_100b_bot?start=${tg.initDataUnsafe.user.id}`;
+
+        document.getElementById('ref-url').value = `https://t.me/your_bot_username?start=${user.id}`;
       }
     }
 
@@ -167,11 +571,10 @@
     let weeklyCoins = 0;
     let rankBonus = 0.00;
 
-    // Global AdController Variable
+    // Adsgram Controller Variable
     let AdController = null;
     const ADSGRAM_BLOCK_ID = "40294";
 
-    // Safe Init for Adsgram
     function getAdController() {
       if (!AdController && window.Adsgram) {
         try {
@@ -183,7 +586,6 @@
       return AdController;
     }
 
-    // Pre-load on startup
     window.addEventListener('DOMContentLoaded', () => {
       getAdController();
     });
@@ -197,7 +599,6 @@
       }
 
       controller.show().then((result) => {
-        // Success reward
         mainCoins += 100;
         weeklyCoins += 100;
         updateUI();
@@ -215,12 +616,12 @@
       let left = seconds;
 
       const interval = setInterval(() => {
-        btn.innerText = `Wait... (${left}s)`;
+        btn.innerHTML = `<span>⏳ Wait... (${left}s)</span>`;
         left--;
         if (left < 0) {
           clearInterval(interval);
           btn.disabled = false;
-          btn.innerText = "▶ Play Ads";
+          btn.innerHTML = `<span>🎬 PLAY ADS</span><span class="sub-reward">Earn +100 Coins</span>`;
         }
       }, 1000);
     }
@@ -274,7 +675,7 @@
 
       mainCoins -= requiredCoins;
       updateUI();
-      alert("Withdrawal request sent successfully! Admin will review it soon.");
+      alert("Withdrawal request submitted successfully!");
       document.getElementById('withdraw-amount').value = '';
       document.getElementById('wallet-address').value = '';
       document.getElementById('coin-cost-text').innerText = '';
