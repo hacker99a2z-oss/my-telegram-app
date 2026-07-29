@@ -4,50 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Real Earners</title>
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Adsgram SDK -->
   <script src="https://sad.adsgram.ai/js/sad-index.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-    body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; justify-content: space-between; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #121212; color: #fff; display: flex; flex-direction: column; height: 100vh; justify-content: space-between; user-select: none; }
     
     /* Header */
     .header { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: #1e1e1e; border-bottom: 1px solid #333; }
     .user-info { display: flex; align-items: center; gap: 10px; }
-    .user-info img { width: 35px; height: 35px; border-radius: 50%; background: #555; }
-    .coins-box { background: #2a2a2a; padding: 5px 12px; border-radius: 20px; font-weight: bold; color: #ffd700; border: 1px solid #ffd700; }
+    .user-info img { width: 38px; height: 38px; border-radius: 50%; background: #333; object-fit: cover; }
+    .coins-box { background: #2a2a2a; padding: 6px 14px; border-radius: 20px; font-weight: bold; color: #ffd700; border: 1px solid #ffd700; }
 
     /* Page Content */
     .page { display: none; padding: 20px; flex-grow: 1; overflow-y: auto; }
     .active-page { display: block; }
 
     /* Home Page */
-    .weekly-box { background: #222; padding: 10px; border-radius: 8px; text-align: right; margin-bottom: 20px; border-right: 4px solid #0088cc; }
+    .weekly-box { background: #1e1e1e; padding: 12px; border-radius: 10px; text-align: right; margin-bottom: 25px; border-right: 4px solid #0088cc; }
     .play-ads-container { display: flex; justify-content: center; align-items: center; height: 250px; flex-direction: column; }
-    .btn-ads { background: linear-gradient(45deg, #0088cc, #005588); color: white; border: none; padding: 18px 40px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); }
-    .btn-ads:disabled { background: #555; cursor: not-allowed; box-shadow: none; }
+    .btn-ads { background: linear-gradient(135deg, #0088cc, #005588); color: white; border: none; padding: 18px 45px; font-size: 20px; font-weight: bold; border-radius: 50px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 136, 204, 0.4); transition: transform 0.1s; }
+    .btn-ads:active { transform: scale(0.96); }
+    .btn-ads:disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
 
     /* Refer Page */
     .ref-card { background: #1e1e1e; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
     .ref-link-box { display: flex; gap: 10px; margin-top: 10px; }
-    .ref-link-box input { flex-grow: 1; padding: 8px; background: #121212; border: 1px solid #444; color: #fff; border-radius: 5px; }
-    .ref-link-box button { padding: 8px 15px; background: #0088cc; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    .ref-item { display: flex; justify-content: space-between; background: #222; padding: 10px; border-radius: 5px; margin-top: 8px; }
+    .ref-link-box input { flex-grow: 1; padding: 10px; background: #121212; border: 1px solid #444; color: #fff; border-radius: 6px; font-size: 13px; }
+    .ref-link-box button { padding: 10px 18px; background: #0088cc; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    .ref-item { display: flex; justify-content: space-between; background: #1e1e1e; padding: 12px; border-radius: 6px; margin-top: 8px; font-size: 14px; }
 
     /* Contest Page */
-    .contest-header { display: flex; justify-content: space-between; align-items: center; background: #1e1e1e; padding: 10px; border-radius: 8px; margin-bottom: 15px; }
-    .rank-row { display: flex; justify-content: space-between; background: #222; padding: 10px; border-radius: 5px; margin-bottom: 5px; align-items: center; }
+    .contest-header { display: flex; justify-content: space-between; align-items: center; background: #1e1e1e; padding: 12px 15px; border-radius: 8px; margin-bottom: 15px; }
+    .rank-row { display: flex; justify-content: space-between; background: #1e1e1e; padding: 12px; border-radius: 6px; margin-bottom: 6px; align-items: center; font-size: 14px; }
 
     /* Withdraw Page */
-    .withdraw-stats { display: flex; justify-content: space-between; margin-bottom: 20px; }
+    .withdraw-stats { display: flex; justify-content: space-between; margin-bottom: 20px; background: #1e1e1e; padding: 15px; border-radius: 10px; }
     .withdraw-box { background: #1e1e1e; padding: 15px; border-radius: 10px; }
-    .withdraw-box select, .withdraw-box input { width: 100%; padding: 10px; margin-top: 10px; background: #121212; border: 1px solid #444; color: white; border-radius: 5px; }
-    .btn-withdraw { width: 100%; margin-top: 15px; padding: 12px; background: #28a745; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; }
+    .withdraw-box select, .withdraw-box input { width: 100%; padding: 12px; margin-top: 8px; background: #121212; border: 1px solid #444; color: white; border-radius: 6px; font-size: 14px; }
+    .btn-withdraw { width: 100%; margin-top: 15px; padding: 14px; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; font-size: 16px; cursor: pointer; }
     .support-link { text-align: center; margin-top: 25px; }
-    .support-link a { color: #0088cc; text-decoration: none; font-size: 14px; }
+    .support-link a { color: #0088cc; text-decoration: none; font-size: 14px; font-weight: bold; }
 
     /* Bottom Navigation */
     .navbar { display: flex; justify-content: space-around; background: #1e1e1e; padding: 12px 0; border-top: 1px solid #333; }
-    .nav-btn { background: none; border: none; color: #888; font-size: 14px; font-weight: bold; cursor: pointer; }
+    .nav-btn { background: none; border: none; color: #888; font-size: 14px; font-weight: bold; cursor: pointer; width: 25%; text-align: center; }
     .nav-btn.active { color: #0088cc; }
   </style>
 </head>
@@ -56,7 +59,7 @@
   <!-- Top Header -->
   <div class="header">
     <div class="user-info">
-      <img id="user-pic" src="https://via.placeholder.com/35" alt="Profile">
+      <img id="user-pic" src="https://via.placeholder.com/38" alt="Profile">
       <span id="user-name">User</span>
     </div>
     <div class="coins-box">🪙 <span id="main-coins">0</span></div>
@@ -70,7 +73,7 @@
     </div>
     <div class="play-ads-container">
       <button id="ad-btn" class="btn-ads" onclick="watchAd()">▶ Play Ads</button>
-      <small id="timer-text" style="margin-top: 10px; color: #aaa;"></small>
+      <small id="timer-text" style="margin-top: 12px; color: #aaa;"></small>
     </div>
   </div>
 
@@ -82,11 +85,11 @@
         <input type="text" id="ref-url" readonly value="Loading...">
         <button onclick="copyRefLink()">Copy</button>
       </div>
-      <small style="color:#aaa; display:block; margin-top:8px;">Get 500 bonus coins when your friend watches 20 ads!</small>
+      <small style="color:#aaa; display:block; margin-top:10px;">Get 500 bonus coins when your friend watches 20 ads!</small>
     </div>
-    <h4>My Referrals</h4>
+    <h4 style="margin-top:20px; color:#ddd;">My Referrals</h4>
     <div id="referral-list">
-      <div class="ref-item"><span>Demo User</span><span>0/20</span></div>
+      <div class="ref-item"><span>Demo User</span><span style="color:#0088cc;">0/20</span></div>
     </div>
   </div>
 
@@ -95,16 +98,15 @@
     <div class="contest-header">
       <div>
         <small style="color:#aaa;">Time Left</small>
-        <div id="contest-timer" style="font-weight:bold;">6d 23h 59m</div>
+        <div id="contest-timer" style="font-weight:bold; color:#0088cc; font-size:16px;">6d 23h 59m</div>
       </div>
-      <div style="font-size: 24px;">🏆</div>
+      <div style="font-size: 26px;">🏆</div>
     </div>
-    <h4>Weekly Leaderboard</h4>
-    <br>
-    <div class="rank-row"><span>#1 User_One</span><span>15,000</span><span style="color:#28a745;">$0.50</span></div>
-    <div class="rank-row"><span>#2 User_Two</span><span>12,000</span><span style="color:#28a745;">$0.30</span></div>
-    <div class="rank-row"><span>#3 User_Three</span><span>10,000</span><span style="color:#28a745;">$0.20</span></div>
-    <div class="rank-row"><span>#4 User_Four</span><span>8,000</span><span>-</span></div>
+    <h4 style="margin-bottom:10px; color:#ddd;">Weekly Leaderboard</h4>
+    <div class="rank-row"><span>#1 User_One</span><span>15,000 Coins</span><span style="color:#28a745; font-weight:bold;">$0.50</span></div>
+    <div class="rank-row"><span>#2 User_Two</span><span>12,000 Coins</span><span style="color:#28a745; font-weight:bold;">$0.30</span></div>
+    <div class="rank-row"><span>#3 User_Three</span><span>10,000 Coins</span><span style="color:#28a745; font-weight:bold;">$0.20</span></div>
+    <div class="rank-row"><span>#4 User_Four</span><span>8,000 Coins</span><span style="color:#aaa;">-</span></div>
   </div>
 
   <!-- Page 4: Withdraw -->
@@ -114,16 +116,16 @@
       <div><small style="color:#aaa;">Main Balance</small><h3>🪙 <span id="withdraw-main-coins">0</span></h3></div>
     </div>
     <div class="withdraw-box">
-      <label>Network</label>
+      <label style="font-size:13px; color:#ccc;">Network</label>
       <select id="network">
         <option value="TON-USDT">TON - USDT</option>
       </select>
       
-      <label style="margin-top:10px; display:block;">Amount ($)</label>
-      <input type="number" id="withdraw-amount" placeholder="0.10, 0.50, 1.00" step="0.1" oninput="calculateCoinsCost()">
-      <small id="coin-cost-text" style="color:#aaa; margin-top:5px; display:block;"></small>
+      <label style="margin-top:12px; display:block; font-size:13px; color:#ccc;">Withdraw Amount ($)</label>
+      <input type="number" id="withdraw-amount" placeholder="e.g. 0.10, 0.50, 1.00" step="0.1" oninput="calculateCoinsCost()">
+      <small id="coin-cost-text" style="color:#0088cc; margin-top:6px; display:block; font-weight:bold;"></small>
 
-      <label style="margin-top:10px; display:block;">Wallet Address</label>
+      <label style="margin-top:12px; display:block; font-size:13px; color:#ccc;">Wallet Address</label>
       <input type="text" id="wallet-address" placeholder="Enter TON/USDT Address">
 
       <button class="btn-withdraw" onclick="processWithdraw()">Withdraw</button>
@@ -147,8 +149,8 @@
     if (tg) {
       tg.expand();
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name;
-        if(tg.initDataUnsafe.user.photo_url) {
+        document.getElementById('user-name').innerText = tg.initDataUnsafe.user.first_name || "User";
+        if (tg.initDataUnsafe.user.photo_url) {
           document.getElementById('user-pic').src = tg.initDataUnsafe.user.photo_url;
         }
         document.getElementById('ref-url').value = `https://t.me/real_earners_100b_bot?start=${tg.initDataUnsafe.user.id}`;
@@ -159,49 +161,54 @@
     let mainCoins = 0;
     let weeklyCoins = 0;
     let rankBonus = 0.00;
-    
-    // Adsgram Controller Setup (Replace blockId with your real Ad block ID)
-    const AdController = window.Adsgram ? window.Adsgram.init({ blockId: "40294" }) : null;
 
+    // Fixed Safe Adsgram Function
     function watchAd() {
-      if (!AdController) {
-        alert("Adsgram not loaded!");
+      // Check if Adsgram SDK is available
+      if (typeof window.Adsgram === 'undefined') {
+        alert("Adsgram SDK is still loading or blocked by AdBlocker. Please wait a few seconds and try again!");
         return;
       }
 
-      AdController.show().then((result) => {
-        // Reward user
-        mainCoins += 100;
-        weeklyCoins += 100;
-        updateUI();
-        startTimer(30);
-      }).catch((result) => {
-        alert("Advertisement was not completed.");
-      });
+      try {
+        // Initialize AdController dynamically on click
+        const AdController = window.Adsgram.init({ blockId: "40294" });
+
+        AdController.show().then((result) => {
+          // Success: Reward user
+          mainCoins += 100;
+          weeklyCoins += 100;
+          updateUI();
+          startTimer(30);
+        }).catch((result) => {
+          // Ad was closed early or failed to show
+          alert("Ad was closed before completion or no ads available.");
+        });
+      } catch (e) {
+        alert("Error initializing ad: " + e.message);
+      }
     }
 
     function startTimer(seconds) {
       const btn = document.getElementById('ad-btn');
-      const timerText = document.getElementById('timer-text');
       btn.disabled = true;
       let left = seconds;
 
       const interval = setInterval(() => {
-        btn.innerText = `Please wait... (${left}s)`;
+        btn.innerText = `Wait... (${left}s)`;
         left--;
         if (left < 0) {
           clearInterval(interval);
           btn.disabled = false;
           btn.innerText = "▶ Play Ads";
-          timerText.innerText = "";
         }
       }, 1000);
     }
 
     function updateUI() {
-      document.getElementById('main-coins').innerText = mainCoins;
-      document.getElementById('weekly-coins').innerText = weeklyCoins;
-      document.getElementById('withdraw-main-coins').innerText = mainCoins;
+      document.getElementById('main-coins').innerText = mainCoins.toLocaleString();
+      document.getElementById('weekly-coins').innerText = weeklyCoins.toLocaleString();
+      document.getElementById('withdraw-main-coins').innerText = mainCoins.toLocaleString();
       document.getElementById('rank-bonus').innerText = rankBonus.toFixed(2);
     }
 
@@ -230,6 +237,11 @@
       const wallet = document.getElementById('wallet-address').value;
       const requiredCoins = usd * 100000;
 
+      if (usd <= 0) {
+        alert("Please enter a valid withdraw amount.");
+        return;
+      }
+
       if (!wallet) {
         alert("Please enter a valid wallet address.");
         return;
@@ -245,6 +257,7 @@
       alert("Withdrawal request sent successfully! Admin will review it soon.");
       document.getElementById('withdraw-amount').value = '';
       document.getElementById('wallet-address').value = '';
+      document.getElementById('coin-cost-text').innerText = '';
     }
   </script>
 </body>
