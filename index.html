@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
+
+  <title>Telegram Mini App</title>
+
+  <!-- Adsgram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 420px;
+      background: #1e293b;
+      border-radius: 20px;
+      padding: 25px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #229ed9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 40px;
+      margin: 0 auto 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 25px;
+    }
+
+    .balance-card {
+      background: #0f172a;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .balance-label {
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .balance {
+      font-size: 32px;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+
+    .watch-btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      background: #229ed9;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .watch-btn:hover {
+      opacity: 0.9;
+    }
+
+    .watch-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .status {
+      margin-top: 15px;
+      font-size: 14px;
+      color: #94a3b8;
+      min-height: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app">
+
+    <div class="logo">📺</div>
+
+    <h1>Watch & Earn</h1>
+
+    <p class="subtitle">
+      Watch an advertisement to earn rewards.
+    </p>
+
+    <div class="balance-card">
+      <div class="balance-label">Your Balance</div>
+      <div class="balance">
+        $<span id="balance">0.00</span>
+      </div>
+    </div>
+
+    <button id="watchAdBtn" class="watch-btn">
+      ▶ Watch Ad
+    </button>
+
+    <div id="status" class="status">
+      Ready to watch an ad.
+    </div>
+
+  </div>
+
+
+  <script>
+
+    // ==========================================
+    // Telegram Mini App
+    // ==========================================
+
+    const tg = window.Telegram?.WebApp;
+
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+
+
+    // ==========================================
+    // Adsgram Configuration
+    // ==========================================
+
+    // Replace YOUR_BLOCK_ID with your real Adsgram Block ID
+    const AdController = window.Adsgram?.init({
+      blockId: "YOUR_BLOCK_ID"
+    });
+
+
+    // ==========================================
+    // App Variables
+    // ==========================================
+
+    let balance = 0;
+
+    const balanceElement = document.getElementById("balance");
+    const watchAdBtn = document.getElementById("watchAdBtn");
+    const statusElement = document.getElementById("status");
+
+
+    // ==========================================
+    // Watch Advertisement
+    // ==========================================
+
+    watchAdBtn.addEventListener("click", async () => {
+
+      if (!AdController) {
+        statusElement.textContent =
+          "Adsgram SDK is not initialized.";
+
+        return;
+      }
+
+      watchAdBtn.disabled = true;
+
+      statusElement.textContent =
+        "Loading advertisement...";
+
+      try {
+
+        // Show Adsgram ad
+        const result = await AdController.show();
+
+        // Ad was successfully watched
+        console.log("Adsgram result:", result);
+
+        // Add reward
+        balance += 0.01;
+
+        balanceElement.textContent =
+          balance.toFixed(2);
+
+        statusElement.textContent =
+          "Ad completed! Reward added.";
+
+      } catch (error) {
+
+        console.error("Adsgram error:", error);
+
+        statusElement.textContent =
+          "Advertisement was not completed.";
+
+      } finally {
+
+        watchAdBtn.disabled = false;
+
+      }
+
+    });
+
+
+  </script>
+
+</body>
+</html>
