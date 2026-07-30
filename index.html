@@ -854,7 +854,7 @@
       listContainer.innerHTML = html;
     }
 
-    /* 7-Day Reset Timer Logic */
+    /* 7-Day Countdown Timer UI (Display only, reset backend e hobe) */
     let contestTargetTime = localStorage.getItem('contest_target') || (Date.now() + 7 * 24 * 60 * 60 * 1000);
     localStorage.setItem('contest_target', contestTargetTime);
 
@@ -864,9 +864,11 @@
         let distance = contestTargetTime - now;
 
         if (distance <= 0) {
-          awardContestPrizesAndResetWeekly();
+          // Client Timer Loop Restart (Actual Reset Database Backend/Cron Job-e hobe)
           contestTargetTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
           localStorage.setItem('contest_target', contestTargetTime);
+          loadUserData();
+          renderLeaderboard();
         }
 
         let days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -877,38 +879,6 @@
         document.getElementById('contest-timer').innerText = 
           `${days}d ${hours}h ${minutes}m ${seconds}s`;
       }, 1000);
-    }
-
-    async function awardContestPrizesAndResetWeekly() {
-      if (!supabaseClient) return;
-
-      // Check contest rank based on weekly_coins
-      const { data: topUsers } = await supabaseClient
-        .from('users')
-        .select('telegram_id, rank_bonus')
-        .order('weekly_coins', { ascending: false })
-        .limit(3);
-
-      if (topUsers) {
-        let myUser = topUsers.find(u => u.telegram_id === currentUser.id);
-        let myRank = topUsers.findIndex(u => u.telegram_id === currentUser.id) + 1;
-
-        if (myRank === 1) rankBonus += 0.50;
-        else if (myRank === 2) rankBonus += 0.30;
-        else if (myRank === 3) rankBonus += 0.20;
-
-        if (myRank >= 1 && myRank <= 3) {
-          alert(`🎉 Congratulations! You ended Weekly Contest at Rank #${myRank} and won Rank Bonus! Check Withdraw page.`);
-        }
-      }
-
-      // RESET ONLY WEEKLY COINS TO 0 FOR ALL USERS (Main balance remains untouched)
-      await supabaseClient.from('users').update({ weekly_coins: 0 }).neq('telegram_id', '');
-
-      // Reset local weekly coins state for active user
-      weeklyCoins = 0;
-      updateUI();
-      await renderLeaderboard();
     }
 
     function updateUI() {
