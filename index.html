@@ -499,7 +499,7 @@
 
       <div class="form-group">
         <label>Withdraw Amount ($)</label>
-        <input type="number" id="withdraw-amount" class="form-control" placeholder="0.50 $" step="0.1" oninput="calculateCoinsCost()">
+        <input type="number" id="withdraw-amount" class="form-control" placeholder="0.50 $" step="0.01" oninput="calculateCoinsCost()">
         <span id="coin-cost-text" style="color:#00aaff; font-size: 11px; margin-top: 6px; display: block; font-weight: 600;"></span>
       </div>
 
@@ -617,22 +617,24 @@
       if (user) {
         mainCoins = user.main_coins || 0;
         weeklyCoins = user.weekly_coins || 0;
+        rankBonus = parseFloat(user.rank_bonus || 0);
       } else {
         await supabaseClient.from('users').insert([
-          { telegram_id: currentUser.id, user_name: currentUser.name, main_coins: 0, weekly_coins: 0 }
+          { telegram_id: currentUser.id, user_name: currentUser.name, main_coins: 0, weekly_coins: 0, rank_bonus: 0.00 }
         ]);
       }
       updateUI();
     }
 
-    // Update user coins in Supabase
+    // Update user coins & bonus in Supabase
     async function saveUserCoinsToDatabase() {
       if (!supabaseClient) return;
       await supabaseClient.from('users').upsert({
         telegram_id: currentUser.id,
         user_name: currentUser.name,
         main_coins: mainCoins,
-        weekly_coins: weeklyCoins
+        weekly_coins: weeklyCoins,
+        rank_bonus: rankBonus
       });
     }
 
@@ -883,11 +885,12 @@
       // Check contest rank based on weekly_coins
       const { data: topUsers } = await supabaseClient
         .from('users')
-        .select('telegram_id')
+        .select('telegram_id, rank_bonus')
         .order('weekly_coins', { ascending: false })
         .limit(3);
 
       if (topUsers) {
+        let myUser = topUsers.find(u => u.telegram_id === currentUser.id);
         let myRank = topUsers.findIndex(u => u.telegram_id === currentUser.id) + 1;
 
         if (myRank === 1) rankBonus += 0.50;
@@ -932,16 +935,22 @@
       alert("Referral link copied!");
     }
 
+    /* Fee Calculation: 1 USD = 100,000 Coins */
     function calculateCoinsCost() {
       const usd = parseFloat(document.getElementById('withdraw-amount').value) || 0;
       const requiredCoins = usd * 100000;
-      document.getElementById('coin-cost-text').innerText = `Requires: ${requiredCoins.toLocaleString()} Coins`;
+      if (usd > 0) {
+        document.getElementById('coin-cost-text').innerText = `Required Fee: ${requiredCoins.toLocaleString()} Coins`;
+      } else {
+        document.getElementById('coin-cost-text').innerText = '';
+      }
     }
 
+    /* Rank Bonus Withdraw with Coins Fee Logic */
     async function processWithdraw() {
       const usd = parseFloat(document.getElementById('withdraw-amount').value) || 0;
       const wallet = document.getElementById('wallet-address').value;
-      const requiredCoins = usd * 100000;
+      const network = document.getElementById('network').value;
 
       if (usd <= 0) {
         alert("Please enter a valid withdraw amount.");
@@ -953,16 +962,52 @@
         return;
       }
 
-      if (mainCoins < requiredCoins) {
-        alert("Insufficient Coins Balance!");
+      // ১. Rank Bonus যথেষ্ট আছে কিনা চেক
+      if (rankBonus < usd) {
+        alert(`Insufficient Rank Bonus! You have $${rankBonus.toFixed(2)} USD in Rank Bonus.`);
         return;
       }
 
-      mainCoins -= requiredCoins;
+      // ২. উইথড্র ফি হিসেব (১ USD = ১০০,০০০ Coins)
+      const requiredCoinsFee = usd * 100000;
+
+      // ৩. Main Coins-এ যথেষ্ট ফি আছে কিনা চেক
+      if (mainCoins < requiredCoinsFee) {
+        alert(`Insufficient Main Coins! You need ${requiredCoinsFee.toLocaleString()} Coins as fee for $${usd.toFixed(2)} withdrawal.`);
+        return;
+      }
+
+      // ৪. Rank Bonus থেকে $ এবং Main Coins থেকে Coins Fee কেটে নেওয়া
+      rankBonus -= usd;
+      mainCoins -= requiredCoinsFee;
+
+      // UI আপডেট করা (Weekly Coins অক্ষত থাকবে)
       updateUI();
+
+      // ৫. ডাটাবেজে ইউজার ব্যালেন্স আপডেট সেভ করা
       await saveUserCoinsToDatabase();
 
-      alert("Withdrawal request submitted successfully!");
+      // ৬. Supabase 'withdrawals' টেবিলে উইথড্র হিস্ট্রি তৈরি করা
+      if (supabaseClient) {
+        try {
+          await supabaseClient.from('withdrawals').insert([
+            {
+              telegram_id: currentUser.id,
+              user_name: currentUser.name,
+              amount_usd: usd,
+              coins_fee_deducted: requiredCoinsFee,
+              wallet_address: wallet,
+              network: network,
+              status: 'pending',
+              created_at: new Date()
+            }
+          ]);
+        } catch(e) {
+          console.warn("Withdrawal log error:", e);
+        }
+      }
+
+      alert(`🎉 Withdrawal request of $${usd.toFixed(2)} submitted successfully!\nFee Deducted: ${requiredCoinsFee.toLocaleString()} Coins.`);
       document.getElementById('withdraw-amount').value = '';
       document.getElementById('wallet-address').value = '';
       document.getElementById('coin-cost-text').innerText = '';
