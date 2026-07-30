@@ -284,7 +284,6 @@
       font-size: 14px; 
     }
 
-    /* Highlight Current User Row */
     .rank-row.current-user {
       border: 1px solid #0088cc;
       background: rgba(0, 136, 204, 0.15);
@@ -619,9 +618,9 @@
         weeklyCoins = user.weekly_coins || 0;
         rankBonus = parseFloat(user.rank_bonus || 0);
       } else {
-        await supabaseClient.from('users').insert([
+        await supabaseClient.from('users').upsert([
           { telegram_id: currentUser.id, user_name: currentUser.name, main_coins: 0, weekly_coins: 0, rank_bonus: 0.00 }
-        ]);
+        ], { onConflict: 'telegram_id' });
       }
       updateUI();
     }
@@ -635,7 +634,7 @@
         main_coins: mainCoins,
         weekly_coins: weeklyCoins,
         rank_bonus: rankBonus
-      });
+      }, { onConflict: 'telegram_id' });
     }
 
     const CHANNEL_URL = "https://t.me/earners_100b"; 
@@ -646,25 +645,25 @@
 
       let userId = currentUser.id;
 
-      // Real-time channel status check
+      // Subscription Status Logic
       if (userId) {
         try {
           const res = await fetch(`/api/check-subscription?userId=${userId}`);
-          const data = await res.json();
-
-          if (!data.isMember) {
-            btn.disabled = false;
-            alert("⚠️ You are not joined in our official Telegram channel (or you left)!\n\nYou must be a member of the channel to watch ads. Redirecting you to the channel...");
-            
-            if (window.Telegram && window.Telegram.WebApp) {
-              window.Telegram.WebApp.openTelegramLink(CHANNEL_URL);
-            } else {
-              window.open(CHANNEL_URL, '_blank');
+          if (res.ok) {
+            const data = await res.json();
+            if (!data.isMember) {
+              btn.disabled = false;
+              alert("⚠️ You are not joined in our official Telegram channel!\n\nRedirecting you to the channel...");
+              if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.openTelegramLink(CHANNEL_URL);
+              } else {
+                window.open(CHANNEL_URL, '_blank');
+              }
+              return;
             }
-            return;
           }
         } catch (err) {
-          console.error("Subscription check failed:", err);
+          console.warn("Subscription check skipped or backend endpoint not available.");
         }
       }
 
@@ -755,7 +754,6 @@
         if (newCount === 20 && !refEntry.bonus_claimed) {
           updates.bonus_claimed = true;
           
-          // Fetch Referrer user data to update both main_coins and weekly_coins
           const { data: referrerUser } = await supabaseClient
             .from('users')
             .select('main_coins, weekly_coins')
@@ -763,7 +761,6 @@
             .maybeSingle();
 
           if (referrerUser) {
-            // Add +500 Coins to BOTH Main Coins AND Weekly Coins for referral owner
             await supabaseClient.from('users').update({
               main_coins: (referrerUser.main_coins || 0) + 500,
               weekly_coins: (referrerUser.weekly_coins || 0) + 500
@@ -813,7 +810,7 @@
       refListContainer.innerHTML = html;
     }
 
-    /* Live Database Leaderboard Logic (TOP 100 Sorted by Weekly Coins) */
+    /* Live Database Leaderboard Logic (TOP 100) */
     async function renderLeaderboard() {
       const listContainer = document.getElementById('leaderboard-list');
       if (!supabaseClient) {
@@ -821,7 +818,6 @@
         return;
       }
 
-      // Fetch top 100 users ordered ONLY by weekly_coins
       const { data: topUsers, error } = await supabaseClient
         .from('users')
         .select('user_name, weekly_coins, telegram_id')
@@ -854,7 +850,7 @@
       listContainer.innerHTML = html;
     }
 
-    /* 7-Day Countdown Timer UI (Display only, reset backend e hobe) */
+    /* 7-Day Countdown Timer */
     let contestTargetTime = localStorage.getItem('contest_target') || (Date.now() + 7 * 24 * 60 * 60 * 1000);
     localStorage.setItem('contest_target', contestTargetTime);
 
@@ -864,7 +860,6 @@
         let distance = contestTargetTime - now;
 
         if (distance <= 0) {
-          // Client Timer Loop Restart (Actual Reset Database Backend/Cron Job-e hobe)
           contestTargetTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
           localStorage.setItem('contest_target', contestTargetTime);
           loadUserData();
@@ -899,10 +894,17 @@
     }
 
     function copyRefLink() {
-      const copyText = document.getElementById("ref-url");
-      copyText.select();
-      document.execCommand("copy");
-      alert("Referral link copied!");
+      const copyText = document.getElementById("ref-url").value;
+      if(navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(copyText).then(() => {
+          alert("Referral link copied!");
+        });
+      } else {
+        const input = document.getElementById("ref-url");
+        input.select();
+        document.execCommand("copy");
+        alert("Referral link copied!");
+      }
     }
 
     /* Fee Calculation: 1 USD = 100,000 Coins */
@@ -916,7 +918,7 @@
       }
     }
 
-    /* Rank Bonus Withdraw with Coins Fee Logic */
+    /* Withdraw Functionality */
     async function processWithdraw() {
       const usd = parseFloat(document.getElementById('withdraw-amount').value) || 0;
       const wallet = document.getElementById('wallet-address').value;
@@ -932,32 +934,24 @@
         return;
       }
 
-      // ১. Rank Bonus যথেষ্ট আছে কিনা চেক
       if (rankBonus < usd) {
         alert(`Insufficient Rank Bonus! You have $${rankBonus.toFixed(2)} USD in Rank Bonus.`);
         return;
       }
 
-      // ২. উইথড্র ফি হিসেব (১ USD = ১০০,০০০ Coins)
       const requiredCoinsFee = usd * 100000;
 
-      // ৩. Main Coins-এ যথেষ্ট ফি আছে কিনা চেক
       if (mainCoins < requiredCoinsFee) {
         alert(`Insufficient Main Coins! You need ${requiredCoinsFee.toLocaleString()} Coins as fee for $${usd.toFixed(2)} withdrawal.`);
         return;
       }
 
-      // ৪. Rank Bonus থেকে $ এবং Main Coins থেকে Coins Fee কেটে নেওয়া
       rankBonus -= usd;
       mainCoins -= requiredCoinsFee;
 
-      // UI আপডেট করা (Weekly Coins অক্ষত থাকবে)
       updateUI();
-
-      // ৫. ডাটাবেজে ইউজার ব্যালেন্স আপডেট সেভ করা
       await saveUserCoinsToDatabase();
 
-      // ৬. Supabase 'withdrawals' টেবিলে উইথড্র হিস্ট্রি তৈরি করা
       if (supabaseClient) {
         try {
           await supabaseClient.from('withdrawals').insert([
@@ -968,8 +962,7 @@
               coins_fee_deducted: requiredCoinsFee,
               wallet_address: wallet,
               network: network,
-              status: 'pending',
-              created_at: new Date()
+              status: 'pending'
             }
           ]);
         } catch(e) {
