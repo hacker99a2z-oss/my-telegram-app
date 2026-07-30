@@ -585,7 +585,44 @@
       renderLeaderboard();
     });
 
-    function watchAd() {
+    const CHANNEL_URL = "https://t.me/earners_100b"; 
+
+    async function watchAd() {
+      const btn = document.getElementById('ad-btn');
+      btn.disabled = true;
+
+      // 1. Fetch Telegram User ID
+      let userId = null;
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe.user) {
+        userId = window.Telegram.WebApp.initDataUnsafe.user.id;
+      }
+
+      // 2. Real-time channel status check via Vercel API
+      if (userId) {
+        try {
+          const res = await fetch(`/api/check-subscription?userId=${userId}`);
+          const data = await res.json();
+
+          // If the user is not joined or has left the channel
+          if (!data.isMember) {
+            btn.disabled = false;
+            alert("⚠️ You are not joined in our official Telegram channel (or you left)!\n\nYou must be a member of the channel to watch ads. Redirecting you to the channel...");
+            
+            if (window.Telegram && window.Telegram.WebApp) {
+              window.Telegram.WebApp.openTelegramLink(CHANNEL_URL);
+            } else {
+              window.open(CHANNEL_URL, '_blank');
+            }
+            return; // Stop playback and redirect
+          }
+        } catch (err) {
+          console.error("Subscription check failed:", err);
+        }
+      }
+
+      btn.disabled = false;
+
+      // 3. Play Adsgram ad directly if user is joined
       const controller = getAdController();
 
       if (!controller) {
