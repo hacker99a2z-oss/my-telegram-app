@@ -9,6 +9,8 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <!-- Adsgram SDK -->
   <script src="https://sad.adsgram.ai/js/sad-index.js"></script>
+  <!-- Supabase JS Client library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     /* Global Reset & PDF Dark Theme Setup */
@@ -447,7 +449,6 @@
     <h4 style="margin: 10px 0; color: #e0e6ed; font-size: 14px;">My Referrals</h4>
     <div id="referral-list">
       <p style="color: #8fa0b5; font-size: 13px; text-align: center; margin-top: 15px;">No referrals yet. Share your link to invite friends!</p>
-
     </div>
   </div>
 
@@ -530,15 +531,20 @@
   </div>
 
   <script>
+    // Supabase Connection Setup
+    const SUPABASE_URL = "https://gxvmcplgkfwsrktauzf.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_OgPJG4Tizm-aKftSk_jAQ_qPNdB";
+    const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
     // Telegram WebApp Initialization
     const tg = window.Telegram ? window.Telegram.WebApp : null;
-    let currentUser = { id: 999, name: "You" };
+    let currentUser = { id: "6902088053", name: "Alex Telegram" };
 
     if (tg) {
       tg.expand();
       if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
         const user = tg.initDataUnsafe.user;
-        currentUser.id = user.id;
+        currentUser.id = String(user.id);
         currentUser.name = user.first_name + (user.last_name ? " " + user.last_name : "");
         
         document.getElementById('user-name').innerText = currentUser.name;
@@ -549,7 +555,7 @@
           document.getElementById('avatar-container').innerText = user.first_name.charAt(0).toUpperCase();
         }
 
-        document.getElementById('ref-url').value = `https://t.me/real_earners_100b_bot?start=${user.id}`;
+        document.getElementById('ref-url').value = `https://t.me/real_earners_100b_bot?start=${currentUser.id}`;
       }
     }
 
@@ -573,10 +579,15 @@
       return AdController;
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
       getAdController();
       startWeeklyContestTimer();
       renderLeaderboard();
+
+      // Check referral parameter & register user if coming from link
+      await checkAndProcessReferral();
+      // Load user referral list
+      await loadMyReferrals();
     });
 
     const CHANNEL_URL = "https://t.me/earners_100b"; 
@@ -585,19 +596,14 @@
       const btn = document.getElementById('ad-btn');
       btn.disabled = true;
 
-      // 1. Fetch Telegram User ID
-      let userId = null;
-      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe.user) {
-        userId = window.Telegram.WebApp.initDataUnsafe.user.id;
-      }
+      let userId = currentUser.id;
 
-      // 2. Real-time channel status check via Vercel API
+      // Real-time channel status check
       if (userId) {
         try {
           const res = await fetch(`/api/check-subscription?userId=${userId}`);
           const data = await res.json();
 
-          // If the user is not joined or has left the channel
           if (!data.isMember) {
             btn.disabled = false;
             alert("⚠️ You are not joined in our official Telegram channel (or you left)!\n\nYou must be a member of the channel to watch ads. Redirecting you to the channel...");
@@ -607,7 +613,7 @@
             } else {
               window.open(CHANNEL_URL, '_blank');
             }
-            return; // Stop playback and redirect
+            return;
           }
         } catch (err) {
           console.error("Subscription check failed:", err);
@@ -616,7 +622,6 @@
 
       btn.disabled = false;
 
-      // 3. Play Adsgram ad directly if user is joined
       const controller = getAdController();
 
       if (!controller) {
@@ -624,12 +629,15 @@
         return;
       }
 
-      controller.show().then((result) => {
+      controller.show().then(async (result) => {
         mainCoins += 100;
         weeklyCoins += 100;
         updateUI();
         renderLeaderboard();
         startTimer(30);
+
+        // Update ad progress in referral system
+        await updateAdProgressInReferrals();
       }).catch((error) => {
         console.log("Ad Error / Closed:", error);
         alert("Ad was not completed or no ads were available.");
@@ -653,11 +661,97 @@
       }, 1000);
     }
 
+    /* Referral Tracking Logic */
+    async function checkAndProcessReferral() {
+      if (!supabaseClient) return;
+      
+      const urlParams = new URLSearchParams(window.location.search);
+      const referrerId = tg?.initDataUnsafe?.start_param || urlParams.get('ref');
+
+      if (referrerId && String(referrerId) !== currentUser.id) {
+        const { data: existing } = await supabaseClient
+          .from('referrals')
+          .select('*')
+          .eq('referred_id', currentUser.id)
+          .maybeSingle();
+
+        if (!existing) {
+          await supabaseClient.from('referrals').insert([
+            {
+              referrer_id: String(referrerId),
+              referred_id: currentUser.id,
+              user_name: currentUser.name,
+              ads_watched: 0,
+              bonus_claimed: false
+            }
+          ]);
+        }
+      }
+    }
+
+    async function updateAdProgressInReferrals() {
+      if (!supabaseClient) return;
+
+      const { data: refEntry } = await supabaseClient
+        .from('referrals')
+        .select('*')
+        .eq('referred_id', currentUser.id)
+        .maybeSingle();
+
+      if (refEntry && refEntry.ads_watched < 20) {
+        const newCount = refEntry.ads_watched + 1;
+        let updates = { ads_watched: newCount };
+
+        if (newCount === 20 && !refEntry.bonus_claimed) {
+          updates.bonus_claimed = true;
+        }
+
+        await supabaseClient
+          .from('referrals')
+          .update(updates)
+          .eq('referred_id', currentUser.id);
+      }
+    }
+
+    async function loadMyReferrals() {
+      if (!supabaseClient) return;
+      const refListContainer = document.getElementById('referral-list');
+      if (!refListContainer) return;
+
+      const { data: refData, error } = await supabaseClient
+        .from('referrals')
+        .select('*')
+        .eq('referrer_id', currentUser.id);
+
+      if (error || !refData || refData.length === 0) {
+        refListContainer.innerHTML = `<p style="color: #8fa0b5; font-size: 13px; text-align: center; margin-top: 15px;">No referrals yet. Share your link to invite friends!</p>`;
+        return;
+      }
+
+      let html = '';
+      refData.forEach(item => {
+        if (item.ads_watched >= 20) {
+          html += `
+            <div class="ref-item">
+              <span>${item.user_name}</span>
+              <span style="color:#00c853; font-weight: bold;">20/20 (Done +500)</span>
+            </div>`;
+        } else {
+          html += `
+            <div class="ref-item">
+              <span>${item.user_name}</span>
+              <span style="color:#0088cc; font-weight: bold;">${item.ads_watched}/20 Ads</span>
+            </div>`;
+        }
+      });
+
+      refListContainer.innerHTML = html;
+    }
+
     /* Dynamic Leaderboard & Auto Prize Distribution Logic */
     let sampleLeaderboard = [];
 
     function renderLeaderboard() {
-      // Add current user dynamically to leaderboard evaluation
       let board = [...sampleLeaderboard, { name: currentUser.name + " (You)", coins: weeklyCoins }];
       board.sort((a, b) => b.coins - a.coins);
 
@@ -688,7 +782,6 @@
         let distance = contestTargetTime - now;
 
         if (distance <= 0) {
-          // Timer Expired: Allocate Rank Bonuses & Reset Weekly Coins
           awardContestPrizes();
           contestTargetTime = Date.now() + 7 * 24 * 60 * 60 * 1000;
           localStorage.setItem('contest_target', contestTargetTime);
@@ -718,7 +811,6 @@
         alert(`🎉 Congratulations! You ended Weekly Contest at Rank #${myRank} and won Rank Bonus! Check Withdraw page.`);
       }
 
-      // Reset Weekly Coins, Main Coins Safe
       weeklyCoins = 0;
       updateUI();
       renderLeaderboard();
