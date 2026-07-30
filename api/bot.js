@@ -5,7 +5,7 @@ export default async function handler(req, res) {
     if (message && message.text && message.text.startsWith('/start')) {
       const chatId = message.chat.id;
 
-      // Welcome Message & Inline Open App Button
+      // Welcome Message with Open App & Support Group Buttons
       await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -18,6 +18,12 @@ export default async function handler(req, res) {
                 {
                   text: "🚀 Open App",
                   web_app: { url: "https://my-telegram-app-silk.vercel.app" }
+                }
+              ],
+              [
+                {
+                  text: "💬 Support Group",
+                  url: "https://t.me/real_eaners_supported" // 👈 এখানে আপনার সাপোর্ট গ্রুপ বা চ্যানেলের লিংক দিন
                 }
               ]
             ]
