@@ -8,7 +8,7 @@ export default async function handler(req, res) {
 
   const { userId } = req.query;
   const BOT_TOKEN = process.env.BOT_TOKEN; // Vercel Environment Variables এ সেট করবেন
-  const CHANNEL_USERNAME = "@your_channel_username"; // 👈 আপনার চ্যানেলের ইউজারনেম (উইথ @)
+  const CHANNEL_USERNAME = "@earners_100b"; // 👈 আপনার চ্যানেলের ইউজারনেম (উইথ @)
 
   if (!userId) {
     return res.status(400).json({ isMember: false, error: "User ID missing" });
