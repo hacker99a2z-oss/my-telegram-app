@@ -575,14 +575,20 @@
     const ADSGRAM_BLOCK_ID = "40294";
 
     function getAdController() {
-      if (!AdController && window.Adsgram) {
+      if (window.Adsgram) {
         try {
-          AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+          if (!AdController) {
+            AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+          }
+          return AdController;
         } catch (err) {
           console.error("Adsgram init error:", err);
+          return null;
         }
+      } else {
+        console.warn("Adsgram SDK script not loaded yet.");
+        return null;
       }
-      return AdController;
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
@@ -660,12 +666,12 @@
         }
       }
 
-      btn.disabled = false;
-
+      // Get or re-initialize Adsgram Controller
       const controller = getAdController();
 
       if (!controller) {
-        alert("⚠️ Ads are only supported on official Telegram app, not in PC and Web.");
+        btn.disabled = false;
+        alert("⚠️ Ad provider is loading. Please wait 3 seconds and click again!");
         return;
       }
 
@@ -682,7 +688,7 @@
         await updateAdProgressInReferrals();
       }).catch((error) => {
         console.log("Ad Error / Closed:", error);
-        alert("Ad was not completed or no ads were available.");
+        alert("Ad was not completed or no ads were available right now.");
         startTimer(5);
       });
     }
