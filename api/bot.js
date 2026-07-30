@@ -9,16 +9,16 @@ export default async function handler(req, res) {
       // Check if text is /start with referral ID
       if (text.startsWith('/start')) {
         const parts = text.split(' ');
-        const referrerId = parts[1]; // এই আইডিটিই হলো রেফারারের আইডি (যেমন: 6902088053)
+        const referrerId = parts[1]; // রেফারারের ইউজার আইডি
 
         let welcomeText = `👋 Hello ${message.from.first_name}!\n\nWelcome to Real Earners. Click the button below to launch the app and start earning coins!`;
         
         if (referrerId && referrerId !== String(chatId)) {
           welcomeText += `\n\n🎁 You joined via a referral link!`;
-          // এখানে ব্যাকএন্ডে ইউজার রেফারাল ডাটা প্রসেস করতে পারেন
         }
 
-        // Welcome Message with WebApp Launch Button
+        // Telegram WebApp URL - এখানে ?ref= দেওয়ার দরকার নেই
+        // টেলিগ্রাম স্বয়ংক্রিয়ভাবে startapp বা initDataUnsafe-এ start parameter টি পাঠিয়ে দেয়
         await fetch(`https://api.telegram.org/bot${process.env.BOT_TOKEN}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
                 [
                   {
                     text: "🚀 Open App",
-                    web_app: { url: `https://my-telegram-app-silk.vercel.app?ref=${referrerId || ''}` }
+                    web_app: { url: "https://my-telegram-app-silk.vercel.app" }
                   }
                 ],
                 [
