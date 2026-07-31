@@ -571,15 +571,13 @@
 
     // Adsgram Controller Variable
     let AdController = null;
-    const ADSGRAM_BLOCK_ID = "int-40497";
+    const ADSGRAM_BLOCK_ID = "int-40556";
 
     function getAdController() {
       if (window.Adsgram) {
         try {
-          if (!AdController) {
-            AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
-          }
-          return AdController;
+      // প্রতিবার নতুনভাবে ইনিশিয়ালাইজ করা আবশ্যক
+          return window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
         } catch (err) {
           console.error("Adsgram init error:", err);
           return null;
@@ -589,7 +587,7 @@
         return null;
       }
     }
-
+        
     window.addEventListener('DOMContentLoaded', async () => {
       getAdController();
       startWeeklyContestTimer();
