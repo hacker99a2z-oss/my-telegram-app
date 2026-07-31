@@ -577,7 +577,7 @@
       if (window.Adsgram) {
         try {
       // প্রতিবার নতুনভাবে ইনিশিয়ালাইজ করা আবশ্যক
-          return window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+          return window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID, debug: true });
         } catch (err) {
           console.error("Adsgram init error:", err);
           return null;
